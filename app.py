@@ -5,44 +5,76 @@ import joblib
 # Load model
 pipeline = joblib.load('models/kmeans_model.joblib')
 
-st.title('🧑🏻‍💼Student Performance')
+st.set_page_config( page_title='Student Performance', page_icon='🧑🏻‍💼', layout='centered' )
 
-st.write('Masukkan nilai akademik siswa untuk menentukan hasil performa.')
+st.title('🧑🏻‍💼 Student Performance')
 
-# Input numerik
-math = st.number_input('Math Score', min_value=0, max_value=100)
-reading = st.number_input('Reading Score', min_value=0, max_value=100)
-writing = st.number_input('Writing Score', min_value=0, max_value=100)
+st.write('Masukkan nilai penilaian siswa untuk menghitung ' 'nilai akhir berdasarkan persentase bobot yang tetap.' )
 
-if st.button('Result'):
-    # Validasi saat submit
-    if math == 0 or reading == 0 or writing == 0:
-        st.error('Nilai belum lengkap. Mohon lengkapi semua nilai sebelum melihat hasil.')
-        st.stop()
+# ==========================================
+# THRESHOLD BATAS AMBANG
+# ==========================================
 
-    # DataFrame sesuai dengan fitur saat training
-    input_df = pd.DataFrame([{
-        'math score': math,
-        'reading score': reading,
-        'writing score': writing
-    }])
+THRESHOLD_SANGAT_BAIK = 92.0
+THRESHOLD_CUKUP_BAIK = 76.0
 
-    # Kolom skor rata-rata (merge scores)
-    input_df['score'] = input_df[['math score', 'reading score', 'writing score']].mean(axis=1)
+# ==========================================
+# VALIDASI NILAI AKHIR
+# ==========================================
 
-    # Thresholds bisa diubah sesuai kebutuhan
-    PERTAHANKAN_THRESHOLD = 92  # >= -> Sangat Baik
-    CUKUP_THRESHOLD = 76        # >=CUKUP_THRESHOLD and < PERTAHANKAN_THRESHOLD -> Cukup Baik
+if not 0 <= nilai_akhir <= 100:
+    st.error('Nilai akhir berada di luar rentang 0–100.')
+    st.stop()
 
-    avg = input_df['score'].iloc[0]
-    if avg >= PERTAHANKAN_THRESHOLD:
-        st.success(f'Rata-rata nilai: {avg:.2f}. Siswa termasuk kategori **Sangat Baik**.')
-        st.info('📌 Pertahankan konsistensi belajar.')
-    elif avg >= CUKUP_THRESHOLD:
-        st.info(f'Rata-rata nilai: {avg:.2f}. Siswa termasuk kategori **Cukup Baik**.')
-        st.info('📌 Fokus pada penguatan materi yang belum dikuasai dan jaga konsistensi belajar.')
-    else:
-        st.warning(f'Rata-rata nilai: {avg:.2f}. Siswa termasuk kategori **Perlu Ditingkatkan**.')
+# ==========================================
+# KLASIFIKASI BERDASARKAN THRESHOLD
+# ==========================================
 
-        st.info('📌 Berdasarkan hasil evaluasi, diperlukan pembelajaran pada topik yang belum dikuasai, disertai materi tambahan dan latihan terarah untuk meningkatkan pemahaman materi.')
+if nilai_akhir >= THRESHOLD_SANGAT_BAIK:
+    kategori = 'Sangat Baik'
 
+    pesan = (
+        '📌 Pertahankan konsistensi belajar '
+        'dan hasil akademik.'
+    )
+
+    jenis_pesan = 'success'
+
+elif nilai_akhir >= THRESHOLD_CUKUP_BAIK:
+    kategori = 'Cukup Baik'
+
+    pesan = (
+        '📌 Fokus pada penguatan materi yang '
+        'belum dikuasai dan jaga konsistensi belajar.'
+    )
+
+    jenis_pesan = 'info'
+
+else:
+    kategori = 'Perlu Ditingkatkan'
+
+    pesan = (
+        '📌 Diperlukan pembelajaran pada topik '
+        'yang belum dikuasai, disertai materi '
+        'tambahan dan latihan terarah.'
+    )
+
+    jenis_pesan = 'warning'
+
+# ==========================================
+# TAMPILKAN HASIL KATEGORI
+# ==========================================
+
+st.write(f'**Nilai Akhir:** {nilai_akhir:.2f}')
+st.write(f'**Kategori:** {kategori}')
+
+if jenis_pesan == 'success':
+    st.success(f'Kategori: **{kategori}**')
+
+elif jenis_pesan == 'info':
+    st.info(f'Kategori: **{kategori}**')
+
+else:
+    st.warning(f'Kategori: **{kategori}**')
+
+st.info(pesan)
